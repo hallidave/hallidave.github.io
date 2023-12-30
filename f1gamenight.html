@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Game Night</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            /* text-align: center; */
+            margin: 20px;
+            background-color: lightgrey;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 0.5em 0;
+        }
+
+        button {
+            display: block;
+            margin: 2em 0;
+        }
+
+        ol {
+            margin: 0;
+            padding: 0;
+            list-style-position: inside;
+        }
+
+        li {
+            padding: 0.1em 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>F1 Game Night</h1>
+
+    <form id="locationForm">
+        <label for="dateInput">Racing Date:</label>
+        <input type="date" id="dateInput" required>
+        <label for="numberInput">Number of Races (1-6):</label>
+        <input type="number" id="numberInput" min="1" max="6" value="4" required>
+        <button type="button" onclick="selectRandomLocations()">Submit</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        function generator(seed) {
+            let value = seed;
+
+            return function () {
+                value = (value * 1664525 + 1013904223) % 4294967296;
+                return value / 4294967296;
+            };
+        }
+
+        function selectRandomLocations() {
+            // Get values from form inputs
+            const dateValue = document.getElementById('dateInput').value;
+            const numberValue = parseInt(document.getElementById('numberInput').value);
+
+            // Array of locations
+            const locations = [
+                ["Bahrain", "bh"],
+                ["Saudi Arabia", "sa"],
+                ["Australia", "au"],
+                ["Miami", "us"],
+                ["Emilia Romagna (Imola)", "it"],
+                ["Spain", "es"],
+                ["Canada", "ca"],
+                ["Austria", "at"],
+                ["Britain", "gb"],
+                ["Belgium", "be"],
+                ["Netherlands", "nl"],
+                ["Italy (Monza)", "it"],
+                ["Japan", "jp"],
+                ["Qatar", "qa"],
+                ["United States (COTA)", "us"],
+                ["Mexico", "mx"],
+                ["Brazil", "br"],
+                ["Las Vegas", "us"],
+                ["Abu Dhabi", "ae"],
+                ["Portugal", "pt"],
+                ["China", "ch"],
+                ["France", "fr"]
+            ];
+
+            // Use the selected date as the seed for randomness
+            const selectedDate = new Date(dateValue);
+            const random = generator(selectedDate.getTime());
+
+            // Select locations
+            const randomIndices = new Set();
+            while (randomIndices.size < numberValue) {
+                randomIndices.add(Math.floor(random() * locations.length));
+            }
+
+            // Display the result
+            const selectedLocations = Array.from(randomIndices).map(index => locations[index]);
+            let output = "<h2>Races for Tonight:</h2><ol>";
+            for (let i = 0; i < selectedLocations.length; i++) {
+                const name = selectedLocations[i][0];
+                const code = selectedLocations[i][1];
+                const line = `<li><span class="fi fi-${code}"></span>&nbsp;${name}</li>`;
+                output += line;
+            }
+            output += "</ol>";
+            output += "<h2>Alternate:</h2>";
+            let alternate = Math.floor(random() * locations.length);
+            while (randomIndices.has(alternate)) {
+                alternate = Math.floor(random() * locations.length);
+            }
+            const name = locations[alternate][0];
+            const code = locations[alternate][1];
+            const line = `<p><span class="fi fi-${code}"></span>&nbsp;${name}</p>`;
+            output += line;
+
+            document.getElementById('result').innerHTML = output;
+        }
+        document.getElementById('dateInput').valueAsDate = new Date();
+    </script>
+</body>
+
+</html>
