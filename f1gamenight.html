@@ -47,7 +47,14 @@
         <label for="dateInput">Racing Date:</label>
         <input type="date" id="dateInput" required>
         <label for="numberInput">Number of Races (1-6):</label>
-        <input type="number" id="numberInput" min="1" max="6" value="4" required>
+        <select id="numberInput" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+        </select>
         <button type="button" onclick="selectRandomLocations()">Submit</button>
     </form>
 
