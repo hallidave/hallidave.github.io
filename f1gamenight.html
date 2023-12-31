@@ -51,11 +51,11 @@
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
-            <option value="4" selected>4</option>
+            <option value="4">4</option>
             <option value="5">5</option>
             <option value="6">6</option>
         </select>
-        <button type="button" onclick="displayTracks()">Submit</button>
+        <button type="button" onclick="update()">Update</button>
     </form>
 
     <div id="result"></div>
@@ -84,11 +84,7 @@
             return Math.floor(diff / oneWeekInMilliseconds);
         }
 
-        function displayTracks() {
-            // Get values from form inputs
-            const dateValue = document.getElementById('dateInput').value;
-            const numberValue = parseInt(document.getElementById('numberInput').value);
-
+        function displayTracks(selectedDate, numberValue) {
             // Array of locations
             const locations = [
                 ["Bahrain", "bh"],
@@ -116,14 +112,13 @@
             ];
 
             // Use the selected date as the seed for randomness
-            const selectedDate = new Date(dateValue);
             const numTracks = locations.length;
             const weeksPerSeries = Math.ceil(numTracks / numberValue);
             const currentSeries = Math.floor(getWeekNumber(selectedDate) / weeksPerSeries) + 1;
             const random = splitmix32((selectedDate.getYear() * numberValue * selectedDate.getDay() * currentSeries) ^ 0x8c68ea9b);
 
             shuffleArray(locations, random);
-            const offset = Math.floor(random() * (numTracks/3));
+            const offset = Math.floor(random() * (numTracks / 3));
             for (let i = 0; i < numberValue; i++) {
                 locations.push(locations[offset + i]);
             }
@@ -147,7 +142,61 @@
 
             document.getElementById('result').innerHTML = output;
         }
-        document.getElementById('dateInput').valueAsDate = new Date();
+
+        function parseDate(dateString) {
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are zero-indexed
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function updateUrl(date, number) {
+            const params = new URLSearchParams();
+            params.set("date", formatDate(date));
+            params.set("number", number);
+            const newUrl = window.location.origin + window.location.pathname + '?' + params.toString();
+            window.history.pushState({ path: newUrl }, "", newUrl);
+        }
+
+        function update() {
+            // Get values from form inputs
+            const dateValue = document.getElementById('dateInput').value;
+            const numberValue = parseInt(document.getElementById('numberInput').value);
+            updateUrl(parseDate(dateValue), numberValue);
+            displayTracks(parseDate(dateValue), numberValue);
+        }
+
+        function setDefaults() {
+            let date = new Date();
+            let number = 4;
+            const queryString = window.location.search;
+            if (queryString) {
+                const params = new URLSearchParams(queryString);
+                if (params.has("date")) {
+                    date = parseDate(params.get("date"));
+                    if (isNaN(date)) {
+                        date = new Date();
+                    }
+                }
+                if (params.has("number")) {
+                    number = parseInt(params.get("number"));
+                    if (isNaN(number) || number < 1 || number > 6) {
+                        number = 4;
+                    }
+                }
+            }
+            document.getElementById("dateInput").valueAsDate = date;
+            document.getElementById("numberInput").value = number;
+            updateUrl(date, number);
+            displayTracks(date, number);
+        }
+
+        setDefaults();
     </script>
 </body>
 
