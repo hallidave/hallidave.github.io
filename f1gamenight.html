@@ -55,7 +55,6 @@
             <option value="5">5</option>
             <option value="6">6</option>
         </select>
-        <button type="button" onclick="update()">Update</button>
     </form>
 
     <div id="result"></div>
@@ -190,8 +189,18 @@
                     }
                 }
             }
-            document.getElementById("dateInput").valueAsDate = date;
-            document.getElementById("numberInput").value = number;
+            const dateInput = document.getElementById("dateInput");
+            const numberInput = document.getElementById("numberInput");
+
+            dateInput.valueAsDate = date;
+            numberInput.value = number;
+            dateInput.addEventListener("input", () => {
+                update();
+            })
+            numberInput.addEventListener("input", () => {
+                update();
+            })
+
             updateUrl(date, number);
             displayTracks(date, number);
         }
