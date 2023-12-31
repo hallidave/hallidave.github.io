@@ -55,22 +55,36 @@
             <option value="5">5</option>
             <option value="6">6</option>
         </select>
-        <button type="button" onclick="selectRandomLocations()">Submit</button>
+        <button type="button" onclick="displayTracks()">Submit</button>
     </form>
 
     <div id="result"></div>
 
     <script>
-        function generator(seed) {
-            let value = seed;
-
+        function splitmix32(a) {
             return function () {
-                value = (value * 1664525 + 1013904223) % 4294967296;
-                return value / 4294967296;
-            };
+                a |= 0; a = a + 0x9e3779b9 | 0;
+                var t = a ^ a >>> 16; t = Math.imul(t, 0x21f0aaad);
+                t = t ^ t >>> 15; t = Math.imul(t, 0x735a2d97);
+                return ((t = t ^ t >>> 15) >>> 0) / 4294967296;
+            }
         }
 
-        function selectRandomLocations() {
+        function shuffleArray(array, random) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function getWeekNumber(date) {
+            const startOfYear = new Date(date.getFullYear(), 0, 0);
+            const diff = date - startOfYear;
+            const oneWeekInMilliseconds = 604800000; // 1000 ms * 60 s * 60 min * 24 hours * 7 days
+            return Math.floor(diff / oneWeekInMilliseconds);
+        }
+
+        function displayTracks() {
             // Get values from form inputs
             const dateValue = document.getElementById('dateInput').value;
             const numberValue = parseInt(document.getElementById('numberInput').value);
@@ -103,29 +117,29 @@
 
             // Use the selected date as the seed for randomness
             const selectedDate = new Date(dateValue);
-            const random = generator(selectedDate.getTime());
+            const numTracks = locations.length;
+            const weeksPerSeries = Math.ceil(numTracks / numberValue);
+            const currentSeries = Math.floor(getWeekNumber(selectedDate) / weeksPerSeries) + 1;
+            const random = splitmix32((selectedDate.getYear() * numberValue * selectedDate.getDay() * currentSeries) ^ 0x8c68ea9b);
 
-            // Select locations
-            const randomIndices = new Set();
-            while (randomIndices.size < numberValue) {
-                randomIndices.add(Math.floor(random() * locations.length));
+            shuffleArray(locations, random);
+            const offset = Math.floor(random() * (numTracks/3));
+            for (let i = 0; i < numberValue; i++) {
+                locations.push(locations[offset + i]);
             }
 
-            // Display the result
-            const selectedLocations = Array.from(randomIndices).map(index => locations[index]);
+            const startIndex = (numberValue * getWeekNumber(selectedDate)) % numTracks
             let output = "<h2>Races for Tonight:</h2><ol>";
-            for (let i = 0; i < selectedLocations.length; i++) {
-                const name = selectedLocations[i][0];
-                const code = selectedLocations[i][1];
+            for (let i = startIndex; i < startIndex + numberValue; i++) {
+                const name = locations[i][0];
+                const code = locations[i][1];
                 const line = `<li><span class="fi fi-${code}"></span>&nbsp;${name}</li>`;
                 output += line;
             }
             output += "</ol>";
             output += "<h2>Alternate:</h2>";
-            let alternate = Math.floor(random() * locations.length);
-            while (randomIndices.has(alternate)) {
-                alternate = Math.floor(random() * locations.length);
-            }
+            let alternate = startIndex - Math.floor(numTracks / 2);
+            if (alternate < 0) alternate = numTracks + alternate;
             const name = locations[alternate][0];
             const code = locations[alternate][1];
             const line = `<p><span class="fi fi-${code}"></span>&nbsp;${name}</p>`;
